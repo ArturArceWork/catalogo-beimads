@@ -63,7 +63,7 @@
 <script>
   const SHEET_ID = '1g-wVHUM0mOab65VbKetMBbd8vRgr6Gh6-P9jXJvu9KU';
   const HOJA = 'Sheet1';
-  const URL = `https://google.com{SHEET_ID}/gviz/tq?tqx=out:json&sheet=${HOJA}`;
+  const URL = 'https://google.com' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + HOJA;
 
   fetch(URL)
     .then(res => res.text())
@@ -99,7 +99,7 @@
           const td = document.createElement('td');
           let valor = celda ? celda.v : '';
           if (index === 3 && valor !== '') {
-            valor = `S/ ${valor}`;
+            valor = 'S/ ' + valor;
           }
           td.textContent = valor;
           tr.appendChild(td);
@@ -111,7 +111,7 @@
       document.getElementById('tabla-productos').style.display = 'table';
     })
     .catch(error => {
-      document.getElementById('mensaje').textContent = 'Error al cargar los datos.';
+      document.getElementById('mensaje').textContent = 'Error al cargar los datos: ' + error.message;
       console.error(error);
     });
 </script>
