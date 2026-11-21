@@ -209,8 +209,6 @@
 
 <script>
   const TELEFONO_WHATSAPP = '51999999999';
-  const CSV_URL = 'https://google.com';
-
   let productos = [];
   let carrito = [];
   let categoriaActual = 'todos';
@@ -227,16 +225,21 @@
     return '🛍️';
   }
 
-  fetch(CSV_URL)
-    .then(res => res.text())
-    .then(csv => {
-      const lineas = csv.trim().split(/\r?\n/);
-      for (let i = 1; i < lineas.length; i++) {
-        if (!lineas[i].trim()) continue;
-        const cols = lineas[i].split(',');
-        const categoria = (cols[1] || '').replace(/"/g, '').trim().toLowerCase();
-        const nombre = (cols[2] || '').replace(/"/g, '').trim();
-        const precio = parseFloat((cols[3] || '0').replace(/"/g, '').trim());
+  // Callback ejecutado directamente por Google Sheets (evita bloqueos CORS)
+  function recibirDatosSheet(respuesta) {
+    try {
+      const filas = respuesta.table.rows;
+      const cols = respuesta.table.cols;
+      const tieneLabels = cols.some(c => c.label && c.label.trim() !== '');
+      const inicio = tieneLabels ? 0 : 1;
+
+      for (let i = inicio; i < filas.length; i++) {
+        const celdas = filas[i].c;
+        if (!celdas) continue;
+        // Índice 0 = ID (oculto), Índice 1 = categoria, Índice 2 = producto, Índice 3 = costo
+        const categoria = celdas[1] && celdas[1].v ? String(celdas[1].v).trim().toLowerCase() : '';
+        const nombre = celdas[2] && celdas[2].v ? String(celdas[2].v).trim() : '';
+        const precio = celdas[3] && celdas[3].v !== null ? parseFloat(celdas[3].v) : 0;
 
         if (nombre) {
           productos.push({ categoria, nombre, precio });
@@ -244,10 +247,10 @@
       }
       document.getElementById('mensaje').style.display = 'none';
       renderizar();
-    })
-    .catch(err => {
-      document.getElementById('mensaje').textContent = 'Error al cargar: ' + err.message;
-    });
+    } catch (e) {
+      document.getElementById('mensaje').textContent = 'Error procesando datos: ' + e.message;
+    }
+  }
 
   function filtrar(cat, boton) {
     categoriaActual = cat;
@@ -278,7 +281,7 @@
           <div class="nombre">${prod.nombre}</div>
           <div class="precio">S/ ${prod.precio.toFixed(2)}</div>
         </div>
-        <button class="btn-agregar" onclick="agregarCarrito('${prod.nombre}', ${prod.precio})">
+        <button class="btn-agregar" onclick="agregarCarrito('${prod.nombre.replace(/'/g, "\\'")}', ${prod.precio})">
           ➕ Agregar al pedido
         </button>
       `;
@@ -318,10 +321,3 @@
     });
     mensaje += `\n*Total estimado: S/ ${total.toFixed(2)}*\n¿Me confirman disponibilidad y métodos de pago?`;
 
-    const url = `https://wa.me{TELEFONO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
-  }
-</script>
-
-</body>
-</html>
