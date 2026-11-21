@@ -7,9 +7,6 @@
   <style>
     :root {
       --primario: #2563eb;
-      --primario-oscuro: #1d4ed8;
-      --whatsapp: #16a34a;
-      --whatsapp-hover: #15803d;
       --fondo: #f8fafc;
       --texto: #1e293b;
       --borde: #e2e8f0;
@@ -19,7 +16,7 @@
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background-color: var(--fondo);
       color: var(--texto);
-      padding-bottom: 90px;
+      padding-bottom: 30px;
     }
     header {
       background: linear-gradient(135deg, #1e3a8a, #2563eb);
@@ -31,11 +28,7 @@
     header h1 { font-size: 1.9rem; letter-spacing: 1px; }
     header p { opacity: 0.9; margin-top: 6px; font-size: 0.95rem; }
 
-    .contenedor {
-      max-width: 960px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
+    .contenedor { max-width: 960px; margin: 24px auto; padding: 0 16px; }
 
     .controles {
       display: flex;
@@ -66,6 +59,7 @@
       border: 1px solid var(--borde);
       border-radius: 20px;
       width: 240px;
+      max-width: 100%;
       font-size: 0.95rem;
       outline: none;
     }
@@ -81,9 +75,6 @@
       border-radius: 14px;
       border: 1px solid var(--borde);
       padding: 18px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
       box-shadow: 0 2px 6px rgba(0,0,0,0.04);
       transition: transform 0.2s, box-shadow 0.2s;
     }
@@ -107,10 +98,9 @@
       padding: 3px 10px;
       border-radius: 12px;
       margin-bottom: 6px;
-      width: fit-content;
     }
-    .badge-niños { background: #dbeafe; color: #1e40af; }
-    .badge-niñas { background: #fce7f3; color: #9d174d; }
+    .badge-ninos { background: #dbeafe; color: #1e40af; }
+    .badge-ninas { background: #fce7f3; color: #9d174d; }
 
     .nombre {
       font-size: 1.15rem;
@@ -122,59 +112,7 @@
       font-size: 1.25rem;
       font-weight: 800;
       color: var(--primario);
-      margin-bottom: 14px;
     }
-    .btn-agregar {
-      width: 100%;
-      background: var(--primario);
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-agregar:hover { background: var(--primario-oscuro); }
-
-    .carrito-barra {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: white;
-      border-top: 1px solid var(--borde);
-      padding: 14px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
-      z-index: 50;
-    }
-    .carrito-info { font-weight: 700; font-size: 1rem; }
-    .carrito-acciones { display: flex; gap: 10px; }
-    .btn-vaciar {
-      background: #e2e8f0;
-      color: #334155;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-wsp {
-      background: var(--whatsapp);
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-wsp:hover { background: var(--whatsapp-hover); }
     .estado { text-align: center; color: #64748b; padding: 40px 0; }
   </style>
 </head>
@@ -182,35 +120,29 @@
 
 <header>
   <h1>👕 BEIMADS 👗</h1>
-  <p>Catálogo de ropa para niños y niñas • Pedidos directos por WhatsApp</p>
+  <p>Catálogo de ropa para niños y niñas</p>
 </header>
 
 <div class="contenedor">
   <div class="controles">
     <div class="filtros">
-      <button class="btn-filtro activo" onclick="filtrar('todos', this)">Todos</button>
-      <button class="btn-filtro" onclick="filtrar('niños', this)">👦 Niños</button>
-      <button class="btn-filtro" onclick="filtrar('niñas', this)">👧 Niñas</button>
+      <button class="btn-filtro activo" data-cat="todos">Todos</button>
+      <button class="btn-filtro" data-cat="niños">👦 Niños</button>
+      <button class="btn-filtro" data-cat="niñas">👧 Niñas</button>
     </div>
-    <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar prenda..." oninput="renderizar()">
+    <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar prenda...">
   </div>
 
   <div id="mensaje" class="estado">Cargando catálogo...</div>
   <div id="grid-productos" class="grid"></div>
 </div>
 
-<div class="carrito-barra" id="carrito-barra" style="display:none;">
-  <div class="carrito-info" id="resumen-carrito">🛒 0 prendas • Total: S/ 0</div>
-  <div class="carrito-acciones">
-    <button class="btn-vaciar" onclick="vaciarCarrito()">Vaciar</button>
-    <button class="btn-wsp" onclick="enviarWhatsApp()">📲 Pedir por WhatsApp</button>
-  </div>
-</div>
-
 <script>
-  const TELEFONO_WHATSAPP = '51999999999';
+  // 👉 Pega aquí el ID de tu Google Sheet
+  // (es el texto largo entre /d/ y /edit en la URL de tu hoja)
+  const SHEET_ID = 'PEGA_AQUI_EL_ID_DE_TU_HOJA';
+
   let productos = [];
-  let carrito = [];
   let categoriaActual = 'todos';
 
   function obtenerEmoji(nombre) {
@@ -225,43 +157,54 @@
     return '🛍️';
   }
 
-  // Callback ejecutado directamente por Google Sheets (evita bloqueos CORS)
+  // Google Sheets llama a esta función con los datos
   function recibirDatosSheet(respuesta) {
     try {
-      const filas = respuesta.table.rows;
-      const cols = respuesta.table.cols;
-      const tieneLabels = cols.some(c => c.label && c.label.trim() !== '');
-      const inicio = tieneLabels ? 0 : 1;
-
-      for (let i = inicio; i < filas.length; i++) {
-        const celdas = filas[i].c;
-        if (!celdas) continue;
-        // Índice 0 = ID (oculto), Índice 1 = categoria, Índice 2 = producto, Índice 3 = costo
-        const categoria = celdas[1] && celdas[1].v ? String(celdas[1].v).trim().toLowerCase() : '';
-        const nombre = celdas[2] && celdas[2].v ? String(celdas[2].v).trim() : '';
-        const precio = celdas[3] && celdas[3].v !== null ? parseFloat(celdas[3].v) : 0;
-
-        if (nombre) {
-          productos.push({ categoria, nombre, precio });
-        }
+      if (respuesta.status === 'error') {
+        throw new Error('La hoja no es accesible. Revisa que esté compartida como "Cualquier persona con el enlace".');
       }
+
+      const filas = respuesta.table.rows;
+      productos = [];
+
+      filas.forEach(fila => {
+        const c = fila.c;
+        if (!c) return;
+
+        // Columnas: 0 = ID, 1 = categoria, 2 = producto, 3 = costo
+        const categoria = c[1] && c[1].v != null ? String(c[1].v).trim().toLowerCase() : '';
+        const nombre    = c[2] && c[2].v != null ? String(c[2].v).trim() : '';
+        const precio    = c[3] && c[3].v != null ? parseFloat(c[3].v) : NaN;
+
+        // Si el costo no es número (ej. la fila de encabezados), se omite
+        if (!nombre || isNaN(precio)) return;
+
+        productos.push({ categoria, nombre, precio });
+      });
+
       document.getElementById('mensaje').style.display = 'none';
       renderizar();
     } catch (e) {
-      document.getElementById('mensaje').textContent = 'Error procesando datos: ' + e.message;
+      mostrarMensaje('Error: ' + e.message);
     }
   }
 
-  function filtrar(cat, boton) {
-    categoriaActual = cat;
-    document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('activo'));
-    boton.classList.add('activo');
-    renderizar();
+  function mostrarMensaje(texto) {
+    const m = document.getElementById('mensaje');
+    m.style.display = 'block';
+    m.textContent = texto;
+  }
+
+  function cargarCatalogo() {
+    const s = document.createElement('script');
+    s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:recibirDatosSheet`;
+    s.onerror = () => mostrarMensaje('No se pudo cargar el catálogo. Revisa el ID de la hoja y tu conexión.');
+    document.body.appendChild(s);
   }
 
   function renderizar() {
     const grid = document.getElementById('grid-productos');
-    const textoBuscado = document.getElementById('buscador').value.toLowerCase();
+    const textoBuscado = document.getElementById('buscador').value.toLowerCase().trim();
     grid.innerHTML = '';
 
     const filtrados = productos.filter(p => {
@@ -270,54 +213,49 @@
       return coincideCat && coincideTexto;
     });
 
+    if (filtrados.length === 0) {
+      if (productos.length > 0) mostrarMensaje('No se encontraron prendas.');
+      return;
+    }
+    document.getElementById('mensaje').style.display = 'none';
+
     filtrados.forEach(prod => {
-      const claseBadge = prod.categoria === 'niñas' ? 'badge-niñas' : 'badge-niños';
       const card = document.createElement('div');
       card.className = 'tarjeta';
-      card.innerHTML = `
-        <div>
-          <div class="emoji-box">${obtenerEmoji(prod.nombre)}</div>
-          <span class="badge ${claseBadge}">${prod.categoria}</span>
-          <div class="nombre">${prod.nombre}</div>
-          <div class="precio">S/ ${prod.precio.toFixed(2)}</div>
-        </div>
-        <button class="btn-agregar" onclick="agregarCarrito('${prod.nombre.replace(/'/g, "\\'")}', ${prod.precio})">
-          ➕ Agregar al pedido
-        </button>
-      `;
+
+      const emoji = document.createElement('div');
+      emoji.className = 'emoji-box';
+      emoji.textContent = obtenerEmoji(prod.nombre);
+
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + (prod.categoria === 'niñas' ? 'badge-ninas' : 'badge-ninos');
+      badge.textContent = prod.categoria;
+
+      const nombre = document.createElement('div');
+      nombre.className = 'nombre';
+      nombre.textContent = prod.nombre;
+
+      const precio = document.createElement('div');
+      precio.className = 'precio';
+      precio.textContent = 'S/ ' + prod.precio.toFixed(2);
+
+      card.append(emoji, badge, nombre, precio);
       grid.appendChild(card);
     });
   }
 
-  function agregarCarrito(nombre, precio) {
-    carrito.push({ nombre, precio });
-    actualizarCarrito();
-  }
-
-  function vaciarCarrito() {
-    carrito = [];
-    actualizarCarrito();
-  }
-
-  function actualizarCarrito() {
-    const barra = document.getElementById('carrito-barra');
-    const resumen = document.getElementById('resumen-carrito');
-    if (carrito.length === 0) {
-      barra.style.display = 'none';
-      return;
-    }
-    barra.style.display = 'flex';
-    const total = carrito.reduce((sum, item) => sum + item.precio, 0);
-    resumen.textContent = `🛒 ${carrito.length} prenda(s) • Total: S/ ${total.toFixed(2)}`;
-  }
-
-  function enviarWhatsApp() {
-    if (carrito.length === 0) return;
-    let mensaje = 'Hola *Beimads*, quiero hacer el siguiente pedido:\n\n';
-    let total = 0;
-    carrito.forEach((item, i) => {
-      mensaje += `${i + 1}. ${item.nombre} - S/ ${item.precio.toFixed(2)}\n`;
-      total += item.precio;
+  // Eventos de filtros y buscador
+  document.querySelectorAll('.btn-filtro').forEach(btn => {
+    btn.addEventListener('click', () => {
+      categoriaActual = btn.dataset.cat;
+      document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('activo'));
+      btn.classList.add('activo');
+      renderizar();
     });
-    mensaje += `\n*Total estimado: S/ ${total.toFixed(2)}*\n¿Me confirman disponibilidad y métodos de pago?`;
+  });
+  document.getElementById('buscador').addEventListener('input', renderizar);
 
+  cargarCatalogo();
+</script>
+</body>
+</html>
