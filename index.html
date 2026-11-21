@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo Beimads</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f9;
+      padding: 30px;
+      color: #333;
+    }
+    .contenedor {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    h2 {
+      margin-top: 0;
+      color: #1a73e8;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+      background-color: #1a73e8;
+      color: white;
+      text-transform: capitalize;
+    }
+    tr:hover {
+      background-color: #f1f7ff;
+    }
+    .estado {
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+<div class="contenedor">
+  <h2>Lista de Productos (En vivo)</h2>
+  <p id="mensaje" class="estado">Cargando datos desde Google Sheets...</p>
+  <table id="tabla-productos" style="display:none;">
+    <thead>
+      <tr id="encabezados"></tr>
+    </thead>
+    <tbody id="cuerpo-tabla"></tbody>
+  </table>
+</div>
+
+<script>
+  const SHEET_ID = '1g-wVHUM0mOab65VbKetMBbd8vRgr6Gh6-P9jXJvu9KU';
+  const HOJA = 'Sheet1';
+  const URL = `https://google.com{SHEET_ID}/gviz/tq?tqx=out:json&sheet=${HOJA}`;
+
+  fetch(URL)
+    .then(res => res.text())
+    .then(texto => {
+      const json = JSON.parse(texto.substring(47, texto.length - 2));
+      const cols = json.table.cols;
+      const filas = json.table.rows;
+
+      const encabezados = document.getElementById('encabezados');
+      const cuerpo = document.getElementById('cuerpo-tabla');
+
+      const tieneLabels = cols.some(col => col.label && col.label.trim() !== '');
+      let inicioDatos = 0;
+
+      if (tieneLabels) {
+        cols.forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = col.label || '';
+          encabezados.appendChild(th);
+        });
+      } else {
+        filas[0].c.forEach(celda => {
+          const th = document.createElement('th');
+          th.textContent = celda ? celda.v : '';
+          encabezados.appendChild(th);
+        });
+        inicioDatos = 1;
+      }
+
+      for (let i = inicioDatos; i < filas.length; i++) {
+        const tr = document.createElement('tr');
+        filas[i].c.forEach((celda, index) => {
+          const td = document.createElement('td');
+          let valor = celda ? celda.v : '';
+          if (index === 3 && valor !== '') {
+            valor = `S/ ${valor}`;
+          }
+          td.textContent = valor;
+          tr.appendChild(td);
+        });
+        cuerpo.appendChild(tr);
+      }
+
+      document.getElementById('mensaje').style.display = 'none';
+      document.getElementById('tabla-productos').style.display = 'table';
+    })
+    .catch(error => {
+      document.getElementById('mensaje').textContent = 'Error al cargar los datos.';
+      console.error(error);
+    });
+</script>
+
+</body>
+</html>
