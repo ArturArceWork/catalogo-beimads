@@ -37,7 +37,6 @@
       padding: 0 16px;
     }
 
-    /* Barra de filtros y búsqueda */
     .controles {
       display: flex;
       flex-wrap: wrap;
@@ -72,7 +71,6 @@
     }
     .buscador:focus { border-color: var(--primario); }
 
-    /* Cuadrícula de productos */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -139,7 +137,6 @@
     }
     .btn-agregar:hover { background: var(--primario-oscuro); }
 
-    /* Barra flotante de carrito */
     .carrito-barra {
       position: fixed;
       bottom: 0;
@@ -202,7 +199,6 @@
   <div id="grid-productos" class="grid"></div>
 </div>
 
-<!-- Barra inferior de pedido -->
 <div class="carrito-barra" id="carrito-barra" style="display:none;">
   <div class="carrito-info" id="resumen-carrito">🛒 0 prendas • Total: S/ 0</div>
   <div class="carrito-acciones">
@@ -212,16 +208,13 @@
 </div>
 
 <script>
-  // CAMBIA ESTE NÚMERO POR EL TUYO (51 + tu celular de 9 dígitos)
   const TELEFONO_WHATSAPP = '51999999999';
-
   const CSV_URL = 'https://google.com';
 
   let productos = [];
   let carrito = [];
   let categoriaActual = 'todos';
 
-  // Asignar emoji automático según el nombre del producto
   function obtenerEmoji(nombre) {
     const texto = nombre.toLowerCase();
     if (texto.includes('conjunto')) return '🧥👖';
@@ -234,18 +227,16 @@
     return '🛍️';
   }
 
-  // Cargar datos desde Google Sheets (ignorando el ID para el cliente)
-  fetch(CSV_URL + '&t=' + new Date().getTime())
+  fetch(CSV_URL)
     .then(res => res.text())
     .then(csv => {
       const lineas = csv.trim().split(/\r?\n/);
       for (let i = 1; i < lineas.length; i++) {
         if (!lineas[i].trim()) continue;
         const cols = lineas[i].split(',');
-        // cols = ID (se oculta al cliente), cols = categoria, cols = producto, cols = costo
-        const categoria = (cols || '').replace(/"/g, '').trim().toLowerCase();
-        const nombre = (cols || '').replace(/"/g, '').trim();
-        const precio = parseFloat((cols || '0').replace(/"/g, '').trim());
+        const categoria = (cols[1] || '').replace(/"/g, '').trim().toLowerCase();
+        const nombre = (cols[2] || '').replace(/"/g, '').trim();
+        const precio = parseFloat((cols[3] || '0').replace(/"/g, '').trim());
 
         if (nombre) {
           productos.push({ categoria, nombre, precio });
@@ -254,8 +245,8 @@
       document.getElementById('mensaje').style.display = 'none';
       renderizar();
     })
-    .catch(() => {
-      document.getElementById('mensaje').textContent = 'No se pudo cargar el catálogo.';
+    .catch(err => {
+      document.getElementById('mensaje').textContent = 'Error al cargar: ' + err.message;
     });
 
   function filtrar(cat, boton) {
@@ -276,7 +267,7 @@
       return coincideCat && coincideTexto;
     });
 
-    filtrados.forEach((prod, idx) => {
+    filtrados.forEach(prod => {
       const claseBadge = prod.categoria === 'niñas' ? 'badge-niñas' : 'badge-niños';
       const card = document.createElement('div');
       card.className = 'tarjeta';
@@ -320,3 +311,17 @@
   function enviarWhatsApp() {
     if (carrito.length === 0) return;
     let mensaje = 'Hola *Beimads*, quiero hacer el siguiente pedido:\n\n';
+    let total = 0;
+    carrito.forEach((item, i) => {
+      mensaje += `${i + 1}. ${item.nombre} - S/ ${item.precio.toFixed(2)}\n`;
+      total += item.precio;
+    });
+    mensaje += `\n*Total estimado: S/ ${total.toFixed(2)}*\n¿Me confirman disponibilidad y métodos de pago?`;
+
+    const url = `https://wa.me{TELEFONO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+  }
+</script>
+
+</body>
+</html>
