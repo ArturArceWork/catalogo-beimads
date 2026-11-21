@@ -62,42 +62,33 @@
 
 <script>
   const SHEET_ID = '1g-wVHUM0mOab65VbKetMBbd8vRgr6Gh6-P9jXJvu9KU';
-  const HOJA = 'Sheet1';
-  const URL = 'https://google.com' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + HOJA;
+  const CSV_URL = 'https://google.com' + SHEET_ID + '/export?format=csv';
 
-  fetch(URL)
-    .then(res => res.text())
-    .then(texto => {
-      const json = JSON.parse(texto.substring(47, texto.length - 2));
-      const cols = json.table.cols;
-      const filas = json.table.rows;
-
+  fetch(CSV_URL)
+    .then(res => {
+      if (!res.ok) throw new Error('Asegúrate de publicar la hoja en la web');
+      return res.text();
+    })
+    .then(csv => {
+      const lineas = csv.trim().split('\n');
       const encabezados = document.getElementById('encabezados');
       const cuerpo = document.getElementById('cuerpo-tabla');
 
-      const tieneLabels = cols.some(col => col.label && col.label.trim() !== '');
-      let inicioDatos = 0;
+      // Primera línea: ID, categoria, producto, costo
+      const titulos = lineas.split(',');
+      titulos.forEach(titulo => {
+        const th = document.createElement('th');
+        th.textContent = titulo.replace(/"/g, '').trim();
+        encabezados.appendChild(th);
+      });
 
-      if (tieneLabels) {
-        cols.forEach(col => {
-          const th = document.createElement('th');
-          th.textContent = col.label || '';
-          encabezados.appendChild(th);
-        });
-      } else {
-        filas[0].c.forEach(celda => {
-          const th = document.createElement('th');
-          th.textContent = celda ? celda.v : '';
-          encabezados.appendChild(th);
-        });
-        inicioDatos = 1;
-      }
-
-      for (let i = inicioDatos; i < filas.length; i++) {
+      // Siguientes líneas: productos
+      for (let i = 1; i < lineas.length; i++) {
+        const columnas = lineas[i].split(',');
         const tr = document.createElement('tr');
-        filas[i].c.forEach((celda, index) => {
+        columnas.forEach((dato, index) => {
           const td = document.createElement('td');
-          let valor = celda ? celda.v : '';
+          let valor = dato.replace(/"/g, '').trim();
           if (index === 3 && valor !== '') {
             valor = 'S/ ' + valor;
           }
@@ -111,7 +102,7 @@
       document.getElementById('tabla-productos').style.display = 'table';
     })
     .catch(error => {
-      document.getElementById('mensaje').textContent = 'Error al cargar los datos: ' + error.message;
+      document.getElementById('mensaje').textContent = 'Error: ' + error.message;
       console.error(error);
     });
 </script>
