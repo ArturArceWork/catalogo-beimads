@@ -14,7 +14,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background-color: var(--fondo);
+      background: var(--fondo);
       color: var(--texto);
       padding-bottom: 30px;
     }
@@ -31,37 +31,23 @@
     .contenedor { max-width: 960px; margin: 24px auto; padding: 0 16px; }
 
     .controles {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: space-between; align-items: center;
       margin-bottom: 24px;
     }
     .filtros { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-filtro {
-      border: 1px solid var(--borde);
-      background: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 600;
-      color: #475569;
-      transition: all 0.2s;
+      border: 1px solid var(--borde); background: white;
+      padding: 8px 16px; border-radius: 20px; cursor: pointer;
+      font-weight: 600; color: #475569; transition: all 0.2s;
     }
     .btn-filtro.activo, .btn-filtro:hover {
-      background: var(--primario);
-      color: white;
-      border-color: var(--primario);
+      background: var(--primario); color: white; border-color: var(--primario);
     }
     .buscador {
-      padding: 9px 15px;
-      border: 1px solid var(--borde);
-      border-radius: 20px;
-      width: 240px;
-      max-width: 100%;
-      font-size: 0.95rem;
-      outline: none;
+      padding: 9px 15px; border: 1px solid var(--borde);
+      border-radius: 20px; width: 240px; max-width: 100%;
+      font-size: 0.95rem; outline: none;
     }
     .buscador:focus { border-color: var(--primario); }
 
@@ -71,11 +57,8 @@
       gap: 18px;
     }
     .tarjeta {
-      background: white;
-      border-radius: 14px;
-      border: 1px solid var(--borde);
-      padding: 18px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      background: white; border-radius: 14px; border: 1px solid var(--borde);
+      padding: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .tarjeta:hover {
@@ -83,36 +66,20 @@
       box-shadow: 0 10px 20px rgba(0,0,0,0.08);
     }
     .emoji-box {
-      font-size: 3.4rem;
-      text-align: center;
-      background: #f1f5f9;
-      border-radius: 10px;
-      padding: 18px 0;
-      margin-bottom: 14px;
+      font-size: 3.4rem; text-align: center; background: #f1f5f9;
+      border-radius: 10px; padding: 18px 0; margin-bottom: 14px;
     }
-    .badge {
-      display: inline-block;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 3px 10px;
-      border-radius: 12px;
-      margin-bottom: 6px;
+    .dato {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--borde);
     }
-    .badge-ninos { background: #dbeafe; color: #1e40af; }
-    .badge-ninas { background: #fce7f3; color: #9d174d; }
-
-    .nombre {
-      font-size: 1.15rem;
-      font-weight: 700;
-      text-transform: capitalize;
-      margin-bottom: 6px;
+    .dato:last-child { border-bottom: none; }
+    .etiqueta {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      color: #64748b; letter-spacing: 0.5px;
     }
-    .precio {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: var(--primario);
-    }
+    .valor { font-weight: 700; text-transform: capitalize; text-align: right; }
+    .valor.precio { color: var(--primario); font-size: 1.2rem; font-weight: 800; }
     .estado { text-align: center; color: #64748b; padding: 40px 0; }
   </style>
 </head>
@@ -138,55 +105,47 @@
 </div>
 
 <script>
-  // 👉 Pega aquí el ID de tu Google Sheet
-  // (es el texto largo entre /d/ y /edit en la URL de tu hoja)
-  const SHEET_ID = 'PEGA_AQUI_EL_ID_DE_TU_HOJA';
+  const URL_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjb6C16z1TvZpc8ecgasJkjm0SB1qukb-VfUj0vpPLSuINAPzE1yuEiDW6cArKjCGKv0xZ-RqsHY1v/pub?gid=0&single=true&output=csv';
 
   let productos = [];
+  let etiquetas = { categoria: 'Categoría', producto: 'Producto', costo: 'Costo' };
   let categoriaActual = 'todos';
 
-  function obtenerEmoji(nombre) {
-    const texto = nombre.toLowerCase();
-    if (texto.includes('conjunto')) return '🧥👖';
-    if (texto.includes('polo') || texto.includes('camiseta')) return '👕';
-    if (texto.includes('short') || texto.includes('pantalon')) return '🩳';
-    if (texto.includes('vestido') || texto.includes('falda')) return '👗';
-    if (texto.includes('media') || texto.includes('calcetin')) return '🧦';
-    if (texto.includes('zapato') || texto.includes('zapatilla')) return '👟';
-    if (texto.includes('casaca') || texto.includes('chompa')) return '🧥';
-    return '🛍️';
+  // Convierte texto CSV en filas (soporta comillas y comas dentro de campos)
+  function parsearCSV(texto) {
+    const filas = [];
+    let fila = [], campo = '', enComillas = false;
+    for (let i = 0; i < texto.length; i++) {
+      const ch = texto[i];
+      if (enComillas) {
+        if (ch === '"' && texto[i + 1] === '"') { campo += '"'; i++; }
+        else if (ch === '"') enComillas = false;
+        else campo += ch;
+      } else if (ch === '"') enComillas = true;
+      else if (ch === ',') { fila.push(campo); campo = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && texto[i + 1] === '\n') i++;
+        fila.push(campo); filas.push(fila); fila = []; campo = '';
+      } else campo += ch;
+    }
+    if (campo !== '' || fila.length) { fila.push(campo); filas.push(fila); }
+    return filas;
   }
 
-  // Google Sheets llama a esta función con los datos
-  function recibirDatosSheet(respuesta) {
-    try {
-      if (respuesta.status === 'error') {
-        throw new Error('La hoja no es accesible. Revisa que esté compartida como "Cualquier persona con el enlace".');
-      }
+  function capitalizar(t) {
+    return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+  }
 
-      const filas = respuesta.table.rows;
-      productos = [];
-
-      filas.forEach(fila => {
-        const c = fila.c;
-        if (!c) return;
-
-        // Columnas: 0 = ID, 1 = categoria, 2 = producto, 3 = costo
-        const categoria = c[1] && c[1].v != null ? String(c[1].v).trim().toLowerCase() : '';
-        const nombre    = c[2] && c[2].v != null ? String(c[2].v).trim() : '';
-        const precio    = c[3] && c[3].v != null ? parseFloat(c[3].v) : NaN;
-
-        // Si el costo no es número (ej. la fila de encabezados), se omite
-        if (!nombre || isNaN(precio)) return;
-
-        productos.push({ categoria, nombre, precio });
-      });
-
-      document.getElementById('mensaje').style.display = 'none';
-      renderizar();
-    } catch (e) {
-      mostrarMensaje('Error: ' + e.message);
-    }
+  function obtenerEmoji(nombre) {
+    const t = nombre.toLowerCase();
+    if (t.includes('conjunto')) return '🧥👖';
+    if (t.includes('polo') || t.includes('camiseta')) return '👕';
+    if (t.includes('short') || t.includes('pantalon')) return '🩳';
+    if (t.includes('vestido') || t.includes('falda')) return '👗';
+    if (t.includes('media') || t.includes('calcetin')) return '🧦';
+    if (t.includes('zapato') || t.includes('zapatilla')) return '👟';
+    if (t.includes('casaca') || t.includes('chompa')) return '🧥';
+    return '🛍️';
   }
 
   function mostrarMensaje(texto) {
@@ -195,56 +154,83 @@
     m.textContent = texto;
   }
 
-  function cargarCatalogo() {
-    const s = document.createElement('script');
-    s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:recibirDatosSheet`;
-    s.onerror = () => mostrarMensaje('No se pudo cargar el catálogo. Revisa el ID de la hoja y tu conexión.');
-    document.body.appendChild(s);
+  async function cargarCatalogo() {
+    try {
+      const resp = await fetch(URL_CSV + '&t=' + Date.now());
+      if (!resp.ok) throw new Error('Respuesta ' + resp.status);
+      const filas = parsearCSV(await resp.text());
+      if (filas.length < 2) throw new Error('La hoja está vacía');
+
+      // Fila 1 = encabezados (ID, categoria, producto, costo)
+      const enc = filas[0].map(h => h.trim());
+      if (enc[1]) etiquetas.categoria = capitalizar(enc[1]);
+      if (enc[2]) etiquetas.producto  = capitalizar(enc[2]);
+      if (enc[3]) etiquetas.costo     = capitalizar(enc[3]);
+
+      productos = [];
+      for (let i = 1; i < filas.length; i++) {
+        const f = filas[i];
+        const categoria = (f[1] || '').trim().toLowerCase();
+        const nombre    = (f[2] || '').trim();
+        const precio    = parseFloat((f[3] || '').replace(',', '.'));
+        if (!nombre || isNaN(precio)) continue;
+        productos.push({ categoria, nombre, precio });
+      }
+
+      document.getElementById('mensaje').style.display = 'none';
+      renderizar();
+    } catch (e) {
+      mostrarMensaje('No se pudo cargar el catálogo (' + e.message + ').');
+    }
+  }
+
+  function crearDato(etiqueta, valor, extra) {
+    const d = document.createElement('div');
+    d.className = 'dato';
+    const e = document.createElement('span');
+    e.className = 'etiqueta';
+    e.textContent = etiqueta;
+    const v = document.createElement('span');
+    v.className = 'valor' + (extra ? ' ' + extra : '');
+    v.textContent = valor;
+    d.append(e, v);
+    return d;
   }
 
   function renderizar() {
     const grid = document.getElementById('grid-productos');
-    const textoBuscado = document.getElementById('buscador').value.toLowerCase().trim();
+    const buscado = document.getElementById('buscador').value.toLowerCase().trim();
     grid.innerHTML = '';
 
-    const filtrados = productos.filter(p => {
-      const coincideCat = categoriaActual === 'todos' || p.categoria === categoriaActual;
-      const coincideTexto = p.nombre.toLowerCase().includes(textoBuscado);
-      return coincideCat && coincideTexto;
-    });
+    const filtrados = productos.filter(p =>
+      (categoriaActual === 'todos' || p.categoria === categoriaActual) &&
+      p.nombre.toLowerCase().includes(buscado)
+    );
 
     if (filtrados.length === 0) {
-      if (productos.length > 0) mostrarMensaje('No se encontraron prendas.');
+      mostrarMensaje('No se encontraron prendas.');
       return;
     }
     document.getElementById('mensaje').style.display = 'none';
 
-    filtrados.forEach(prod => {
+    filtrados.forEach(p => {
       const card = document.createElement('div');
       card.className = 'tarjeta';
 
       const emoji = document.createElement('div');
       emoji.className = 'emoji-box';
-      emoji.textContent = obtenerEmoji(prod.nombre);
+      emoji.textContent = obtenerEmoji(p.nombre);
 
-      const badge = document.createElement('span');
-      badge.className = 'badge ' + (prod.categoria === 'niñas' ? 'badge-ninas' : 'badge-ninos');
-      badge.textContent = prod.categoria;
-
-      const nombre = document.createElement('div');
-      nombre.className = 'nombre';
-      nombre.textContent = prod.nombre;
-
-      const precio = document.createElement('div');
-      precio.className = 'precio';
-      precio.textContent = 'S/ ' + prod.precio.toFixed(2);
-
-      card.append(emoji, badge, nombre, precio);
+      card.append(
+        emoji,
+        crearDato(etiquetas.categoria, p.categoria),
+        crearDato(etiquetas.producto, p.nombre),
+        crearDato(etiquetas.costo, 'S/ ' + p.precio.toFixed(2), 'precio')
+      );
       grid.appendChild(card);
     });
   }
 
-  // Eventos de filtros y buscador
   document.querySelectorAll('.btn-filtro').forEach(btn => {
     btn.addEventListener('click', () => {
       categoriaActual = btn.dataset.cat;
