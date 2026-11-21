@@ -61,29 +61,29 @@
 </div>
 
 <script>
-  const SHEET_ID = '1g-wVHUM0mOab65VbKetMBbd8vRgr6Gh6-P9jXJvu9KU';
-  const CSV_URL = 'https://google.com' + SHEET_ID + '/export?format=csv';
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjb6C16z1TvZpc8ecgasJkjm0SB1qukb-VfUj0vpPLSuINAPzE1yuEiDW6cArKjCGKv0xZ-RqsHY1v/pub?gid=0&single=true&output=csv';
 
   fetch(CSV_URL)
     .then(res => {
-      if (!res.ok) throw new Error('Asegúrate de publicar la hoja en la web');
+      if (!res.ok) throw new Error('No se pudo leer el enlace CSV');
       return res.text();
     })
     .then(csv => {
-      const lineas = csv.trim().split('\n');
+      const lineas = csv.trim().split(/\r?\n/);
       const encabezados = document.getElementById('encabezados');
       const cuerpo = document.getElementById('cuerpo-tabla');
 
-      // Primera línea: ID, categoria, producto, costo
-      const titulos = lineas.split(',');
+      // Fila 0: encabezados (ID, categoria, producto, costo)
+      const titulos = lineas[0].split(',');
       titulos.forEach(titulo => {
         const th = document.createElement('th');
         th.textContent = titulo.replace(/"/g, '').trim();
         encabezados.appendChild(th);
       });
 
-      // Siguientes líneas: productos
+      // Filas 1 en adelante: productos
       for (let i = 1; i < lineas.length; i++) {
+        if (!lineas[i].trim()) continue;
         const columnas = lineas[i].split(',');
         const tr = document.createElement('tr');
         columnas.forEach((dato, index) => {
